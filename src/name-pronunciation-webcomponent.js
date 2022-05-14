@@ -32,7 +32,7 @@ template.innerHTML = `
 
 `;
 
-export default class NamePronunciationToolComponent extends HTMLElement {
+class NamePronunciationToolComponent extends HTMLElement {
 
     config = {
         url: {
