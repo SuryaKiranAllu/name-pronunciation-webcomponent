@@ -179,3 +179,5 @@ export default class NamePronunciationToolComponent extends HTMLElement {
     }
 
 }
+
+customElements.define('name-pronunciation', NamePronunciationToolComponent);
