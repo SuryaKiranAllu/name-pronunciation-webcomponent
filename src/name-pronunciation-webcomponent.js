@@ -24,10 +24,10 @@ template.innerHTML = `
     </style>
 
     <div>
-        <img id="play-btn" class="icon" src="/images/icons8-play-button-circled-24.png">
-        <img id="pause-btn" class="pause icon" src="/images/icons8-pause-button-24.png">
-        <img id="record-btn" class="record icon" src="/images/icons8-microphone-24.png">
-        <img id="stop-btn" class="stop icon" src="/images/icons8-block-microphone-24.png">
+        <img id="play-btn" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wD/AP+gvaeTAAAA/0lEQVRIid2USQoCMRREH0o3iBdx41kUh3bX53G6gCs3opfRjSC20ynatbpIAiIZfkdXFtTmU6lKfn4C/44UGAFroADumoWuZVoThT5wA54BXoFeFeM6MBcYf3IG1CQBMeaGk5B5/wtzw67LPMXf84Mw4ILj4keBhU1gKQwZ2gI2gUUGOWpUfdqVLeAsDABoAXuPtrAFlBUCABrAwqEtjUg0txF42Ionx25iWnQ0wvcT7IS7y4Et0PZotrZiFjhBlTEd2AJS1Mf1i4eWuI7WE5r42HGZG8y+MB+HzEFd/DTCfELFse+i+inpebAtLiSoj2uFmu1S86hrAzwX+h94AcCGAP/8i2hpAAAAAElFTkSuQmCC"/>
+        <img id="pause-btn" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wD/AP+gvaeTAAAA4UlEQVRIid2UQQ6CMBBFXzRwPQmoXEnEYxDXeg9dS0RcegFcqwtaQ5oWSumKn/yknUz/bzudwtwRAilwBErgLViK2FbkOCEBauA7wAcQjxFeAgcLYZU5sLAxcBGXzIbEkwnikpFJPKS9z6kGTwyFT3sWSZjmKjcyoVsU49EcsNIF7z07UneszlWWOoPGo0EjE6zerQM+OoOXR4O/Vtfg6tHgojM4eTQ464IBUDG90Wp6ftjYg4G2B7rIJ4jvhsShrcveQTxj5LOPsKtJhcW1mBDQflwFcKPt0EaMC2AtcmaMHxiD0QtCeo1+AAAAAElFTkSuQmCC"/>
+        <img id="record-btn" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wD/AP+gvaeTAAAA1UlEQVRIie2Uuw3CMBRFDxSpIjpgERaADfhMgyhANGGObACMARukTegCQpSRQuFngRIDdpQCRI5kPdm+713LP/gXPGADJEAMBDJWGwGQF1pQp0FiMDjZJLYsDfKq+W1Lg8o0Bt9rcEPdHF/6iUETS+yI9upiEEkcSAwNmrCgiQyal6xlVVvpe6iXG1P+KvaiXbkY9IGLJM7f6BaiOQNdFwOAGZBJgR0wRJ2JD4x4rDwDJq7FNVMgpfwP6ZYC46rFNT3U/h6fCh+ApczVijaw5vdfcsNH7larOieCuRIxAAAAAElFTkSuQmCC"/>
+        <img id="stop-btn" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wD/AP+gvaeTAAABFElEQVRIie3UsUrDUBTG8Z8OnYROjZsg2M3JCs6Ci7M+jZu41OfwDXTq0lkF6+CqY+smDoKD0jrklIQa2jRmcOgH4XIu3z3/k5Pcw0o1qYFLjDBEN/ZqUxeTmadbJ2BUAHgtc3CtJGBS9fx6SUBlrQD/F/Ah/XM2Ih4VeIZ/ATzHuh/rVYGnaK+0LqRvcB1xQ3pzh2oaFZt4D8jZAu8u+kgibqKHg0WQU3wH5AaH0m/Swk7O1w/PE9q4jXigxE0/wZvfc+gTx+FJIvkEX7G+YGtR8qkSnOMhBxhIWzetsJ1LPkanbPJZTQF5NWVtGcvalaigIkBP1paOrF33yk/ruYA9PGI74hbucLRs8nmarXTpyivrB1TQTQ/5Ey3KAAAAAElFTkSuQmCC"/>
     </div>
 
 `;
