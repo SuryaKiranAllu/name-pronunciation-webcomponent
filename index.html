@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPT Web Component</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <div class="title">
+                My Office
+            </div>
+        </nav>
+        <main>
+            <h2 class="employees-title">People in my Office</h2>
+            <div class="employees-table-wrapper">
+                <table class="employees-table">
+                    <thead>
+                        <tr>
+                            <th>Sr.No</th>
+                            <th>Legal First Name</th>
+                            <th>Legal Last Name</th>
+                            <th>Preferred Name</th>
+                            <th>Pronunciation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    <script>
+        const getEmployees = fetch('http://localhost:8080/spellbind/listEmployees', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        }).then(response => response.json());
+
+        window.addEventListener('DOMContentLoaded', (event) => {
+            const employeesTableBody = document.querySelector(".employees-table tbody");
+            getEmployees.then(data => {
+                let employees = data;
+                console.dir(employees);
+                employees.forEach(employee => {
+                    let row = employeesTableBody.insertRow();
+                    let serialNumberCell = row.insertCell(0);
+                    serialNumberCell.innerHTML = employee.employeeId;
+                    let legalFirstNameCell = row.insertCell(1);
+                    legalFirstNameCell.innerHTML = employee.firstName;
+                    let legalLastNameCell = row.insertCell(2);
+                    legalLastNameCell.innerHTML = employee.lastName;
+                    let preferredNameCell = row.insertCell(3);
+                    preferredNameCell.innerHTML = employee.preferredName;
+                    let pronunciationCell = row.insertCell(4);
+                    let legalName = employee.firstName + ' ' + employee.lastName;
+                    let preferredName = employee.preferredName;
+                    pronunciationCell.innerHTML = `
+                        <name-pronunciation data-preferred-name="${preferredName}"
+                            data-legal-name="${legalName}">
+                        </name-pronunciation>
+                    `;
+                });
+            });
+        });
+    </script>
+    <script src="/dist/npt-webcomponent.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import NamePronunciationToolComponent from "./src/name-pronunciation-webcomponent";
+import NamePronunciationToolComponent from "./src/npt-webcomponent";
 
 customElements.define('name-pronunciation', NamePronunciationToolComponent);
 

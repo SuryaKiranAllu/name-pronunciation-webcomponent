@@ -2,9 +2,8 @@
   "name": "@suryakiranallu/name-pronunciation-webcomponent",
   "version": "1.0.3",
   "description": "A web component which can pronounce the name given.",
-  "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rollup --config"
   },
   "publishConfig": {
     "access": "public",
@@ -24,5 +23,10 @@
   "bugs": {
     "url": "https://github.com/SuryaKiranAllu/name-pronunciation-webcomponent/issues"
   },
-  "homepage": "https://github.com/SuryaKiranAllu/name-pronunciation-webcomponent#readme"
+  "homepage": "https://github.com/SuryaKiranAllu/name-pronunciation-webcomponent#readme",
+  "devDependencies": {
+    "chai": "^4.3.6",
+    "mocha": "^10.0.0",
+    "rollup": "^2.73.0"
+  }
 }
