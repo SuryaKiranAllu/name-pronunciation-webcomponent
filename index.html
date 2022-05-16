@@ -44,32 +44,36 @@
 
         window.addEventListener('DOMContentLoaded', (event) => {
             let textToSpeechURL = "http://localhost:8080/spellbind/speechSynthesis";
+            let getAudioRecordingURL = "http://localhost:8080/spellbind/getAudioFile";
             let saveRecordingURL = "http://localhost:8080/spellbind/storeAudioFile";
             const employeesTableBody = document.querySelector(".employees-table tbody");
             getEmployees.then(data => {
                 let employees = data;
-                console.dir(employees);
                 employees.forEach(employee => {
                     let row = employeesTableBody.insertRow();
                     let serialNumberCell = row.insertCell(0);
                     serialNumberCell.innerHTML = employee.employeeId;
                     let legalFirstNameCell = row.insertCell(1);
-                    legalFirstNameCell.innerHTML = employee.firstName;
+                    let fname = (employee.firstName != null)? employee.firstName: "";
+                    legalFirstNameCell.innerHTML = fname;
                     let legalLastNameCell = row.insertCell(2);
-                    legalLastNameCell.innerHTML = employee.lastName;
+                    let lname = (employee.lastName != null)? employee.lastName: "";
+                    legalLastNameCell.innerHTML = lname;
                     let preferredNameCell = row.insertCell(3);
-                    preferredNameCell.innerHTML = employee.preferredName;
+                    let preferredName = (employee.preferredName != null)? employee.preferredName: ""; 
+                    preferredNameCell.innerHTML = preferredName;
                     let pronunciationCell = row.insertCell(4);
-                    let legalName = employee.firstName + ' ' + employee.lastName;
-                    let preferredName = employee.preferredName;
+                    let legalName = fname + ' ' + lname;
+                                                  
                     pronunciationCell.innerHTML = `
-                        <name-pronunciation 
-                            data-recorded-audio-data="${employee.audioContent}" data-preferred-name="${preferredName}"
-                            data-legal-name="${legalName}" data-record-id="${employee.employeeId}"
-                            data-text-to-speech-url="${textToSpeechURL}"
-                            data-save-recording-url="${saveRecordingURL}"
-                            data-recording-timeout="15">
-                        </name-pronunciation>
+                    <name-pronunciation 
+                        data-preferred-name="${preferredName}"
+                        data-legal-name="${legalName}" data-record-id="${employee.employeeId}"
+                        data-text-to-speech-url="${textToSpeechURL}"
+                        data-get-audio-recording="${getAudioRecordingURL}"
+                        data-save-recording-url="${saveRecordingURL}"
+                        data-recording-timeout="15">
+                    </name-pronunciation>
                     `;
                 });
             });

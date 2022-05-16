@@ -40,6 +40,7 @@ export default class NamePronunciationToolComponent extends HTMLElement {
         recordingTime: 10, // 10 seconds
         urls: {
             textToSpeech: "",
+            getAudioRecording: "",
             saveRecording: ""
         }
     }
@@ -79,6 +80,13 @@ export default class NamePronunciationToolComponent extends HTMLElement {
 
         this.config.urls.textToSpeech = this.getAttribute("data-text-to-speech-url");
 
+        if (!this.hasAttribute("data-get-audio-recording") 
+            || !this.getAttribute("data-get-audio-recording").trim().length > 0) {
+            throw new Error("data-get-audio-recording attribute is required.");
+        }
+
+        this.config.urls.getAudioRecording = this.getAttribute("data-get-audio-recording");
+
         if (!this.hasAttribute("data-save-recording-url")
             || !this.getAttribute("data-save-recording-url").trim().length > 0) {
             throw new Error("data-save-recording-url attribute is required.")
@@ -92,13 +100,6 @@ export default class NamePronunciationToolComponent extends HTMLElement {
             } catch(err) {
                 this.config.recordingTime = 10; // 10 seconds
             }
-        }
-
-        if (this.hasAttribute("data-recorded-audio-data")) {
-            let audioData = this.getAttribute("data-recorded-audio-data");
-            let audioChunks = [];
-            audioChunks.push(audioData);
-            this.storedAudioRecording = new Blob(audioChunks);
         }
 
         if (this.hasAttribute("data-preferred-name")) {
@@ -189,11 +190,34 @@ export default class NamePronunciationToolComponent extends HTMLElement {
             this.isPaused = false;
         }
 
-        //if (this.hasStoredAudioRecording()) {
-        //    this.playAudioRecording(this.storedAudioRecording);
-        //    return;
-        //}
+        if (this.hasStoredAudioRecording()) {
+            this.playAudioRecording(this.storedAudioRecording);
+            return;
+        } else {
+            this.getAudioRecording(this.recordId)
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob()
+                    } else {
+                        return null;
+                    }
+                })
+                .then(blob => {
+                    if (blob != null) {
+                        this.storedAudioRecording = blob;
+                        this.playAudioRecording(this.storedAudioRecording);
+                    } else {
+                        this.continueProcessing();
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    this.continueProcessing();
+                });
+        }
+    }
 
+    continueProcessing() {
         if (this.hasAudioRecording()) {
             this.playAudioRecording(this.audioRecording);
             return;
@@ -205,6 +229,8 @@ export default class NamePronunciationToolComponent extends HTMLElement {
             text = this.preferredName;
         } else if (this.legalName != null && this.legalName.trim().length > 0) {
             text = this.legalName;
+        } else {
+            text = "";
         }
 
         this.textToSpeech(text)
@@ -344,7 +370,7 @@ export default class NamePronunciationToolComponent extends HTMLElement {
     }
 
     processAudioRecording() {
-        let audioBlob = new Blob(this.audioChunks, { type: "audio/wav" });
+        let audioBlob = new Blob(this.audioChunks);
         this.audioRecording = audioBlob;
         let confirmation = window.confirm("Do you want to save the audio recording?");
         console.debug("Confirmation dialog :: selected choice ",confirmation);
@@ -382,11 +408,30 @@ export default class NamePronunciationToolComponent extends HTMLElement {
         }
     }
 
+    getAudioRecording(recordId) {
+        if (recordId != null && recordId.trim().length > 0) {
+            console.debug(this.config.urls.getAudioRecording);
+            let url = new URL(this.config.urls.getAudioRecording);
+            let params = {
+                employeeId: recordId.trim()
+            };
+            url.search = new URLSearchParams(params).toString();
+
+            return fetch(url, {
+                method: "GET",
+                headers: {
+                    "Accept": "application/octet-stream"
+                }
+            });
+        }
+    }
+
     saveAudioRecording(audioBlob) {
         console.debug(this.config.urls.saveRecording);
         let url = new URL(this.config.urls.saveRecording);
         let formData = new FormData();
-        formData.append("audio", audioBlob, this.recordId + ".wav");
+        formData.set("recordId", this.recordId)
+        formData.set("audioRecording", audioBlob)
         return fetch(url, {
             method: "POST",
             body: formData
