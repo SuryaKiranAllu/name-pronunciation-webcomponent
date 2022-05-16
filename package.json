@@ -1,6 +1,6 @@
 {
   "name": "@suryakiranallu/name-pronunciation-webcomponent",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A web component which can pronounce the name given.",
   "scripts": {
     "build": "rollup --config"
