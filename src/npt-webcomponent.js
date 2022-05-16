@@ -39,8 +39,8 @@ export default class NamePronunciationToolComponent extends HTMLElement {
     config = {
         recordingTime: 10, // 10 seconds
         urls: {
-            speechSynthesis: "http://localhost:8080/spellbind/speechSynthesis",
-            saveRecording: "http://localhost:8080/spellbind/storeAudioFile"
+            textToSpeech: "",
+            saveRecording: ""
         }
     }
     mediaConstraints = {
@@ -48,14 +48,18 @@ export default class NamePronunciationToolComponent extends HTMLElement {
     };
     recorder = null;
     audioChunks = [];
-    audioData = [];
+
     isRecording = false;
     audioRecording = null;
     recorderTimeoutId = null;
-    recordedAudioData = [];
-    audioPlayer = null;
+
+    storedAudioRecording = null;
     preferredName = "";
     legalName = "";
+    recordId = "";
+
+    audioPlayer = null;
+    isPaused = false;
     
     constructor() {
         super();
@@ -68,10 +72,33 @@ export default class NamePronunciationToolComponent extends HTMLElement {
     // Lifecycle callbacks
     // Fires when an instance was inserted into the document
     connectedCallback() {
-        if (this.hasAttribute("data-audio-data")) {
-            let audioData = this.getAttribute("data-audio-data");
+        if (!this.hasAttribute("data-text-to-speech-url") 
+            || !this.getAttribute("data-text-to-speech-url").trim().length > 0) {
+            throw new Error("data-text-to-speech-url attribute is required.");
+        }
 
-            
+        this.config.urls.textToSpeech = this.getAttribute("data-text-to-speech-url");
+
+        if (!this.hasAttribute("data-save-recording-url")
+            || !this.getAttribute("data-save-recording-url").trim().length > 0) {
+            throw new Error("data-save-recording-url attribute is required.")
+        }
+
+        this.config.urls.saveRecording = this.getAttribute("data-save-recording-url");
+
+        if (this.hasAttribute("data-recording-timeout")) {
+            try {
+                this.config.recordingTime = parseInt(this.getAttribute("data-recording-timeout"));
+            } catch(err) {
+                this.config.recordingTime = 10; // 10 seconds
+            }
+        }
+
+        if (this.hasAttribute("data-recorded-audio-data")) {
+            let audioData = this.getAttribute("data-recorded-audio-data");
+            let audioChunks = [];
+            audioChunks.push(audioData);
+            this.storedAudioRecording = new Blob(audioChunks);
         }
 
         if (this.hasAttribute("data-preferred-name")) {
@@ -84,25 +111,46 @@ export default class NamePronunciationToolComponent extends HTMLElement {
             console.debug("legal name:", this.legalName);
         }
 
+        if (!this.hasAttribute("data-record-id") || !this.getAttribute("data-record-id").trim().length > 0) {
+            throw new Error('data-record-id attribute is required.');
+        }
+
+        this.recordId = this.getAttribute("data-record-id");
+
         this.shadowRoot.querySelector("#play-btn").addEventListener("click", () => {
-            this.play();
+            this.playButtonHandler();
         });
 
         this.shadowRoot.querySelector("#pause-btn").addEventListener("click", () => {
-            this.pauseHandler();
+            this.pauseButtonHandler();
         });
 
         this.shadowRoot.querySelector("#record-btn").addEventListener("click", () => {
-            this.record();
+            this.recordButtonHandler();
         });
 
         this.shadowRoot.querySelector("#stop-btn").addEventListener("click", () => {
-            this.stop();
+            this.stopButtonHandler();
         });
     }
 
     // Fires when an instance was removed from the document
     disconnectedCallback() {
+        this.shadowRoot.querySelector("#play-btn").removeEventListener("click", () => {
+            this.playButtonHandler();
+        });
+
+        this.shadowRoot.querySelector("#pause-btn").removeEventListener("click", () => {
+            this.pauseButtonHandler();
+        });
+
+        this.shadowRoot.querySelector("#record-btn").removeEventListener("click", () => {
+            this.recordButtonHandler();
+        });
+
+        this.shadowRoot.querySelector("#stop-btn").removeEventListener("click", () => {
+            this.stopButtonHandler();
+        });
     }
 
     // Fires when an attribute was added, removed, or updated
@@ -132,11 +180,22 @@ export default class NamePronunciationToolComponent extends HTMLElement {
         this.preferredName = pPreferredName;
     }
 
-    play() {
+    // Button Click Handlers
+    playButtonHandler() {
         console.debug("Triggered play!");
 
+        if (this.isPaused) {
+            this.audioPlayer.play();
+            this.isPaused = false;
+        }
+
+        //if (this.hasStoredAudioRecording()) {
+        //    this.playAudioRecording(this.storedAudioRecording);
+        //    return;
+        //}
+
         if (this.hasAudioRecording()) {
-            this.playAudioRecording();
+            this.playAudioRecording(this.audioRecording);
             return;
         }
 
@@ -144,63 +203,41 @@ export default class NamePronunciationToolComponent extends HTMLElement {
 
         if (this.preferredName != null && this.preferredName.trim().length > 0) {
             text = this.preferredName;
-        }
-
-        if (this.legalName != null && this.legalName.trim().length > 0) {
+        } else if (this.legalName != null && this.legalName.trim().length > 0) {
             text = this.legalName;
         }
 
         this.textToSpeech(text)
             .then(response => response.blob())
             .then(blob => {
-                const audioUrl = URL.createObjectURL(blob);
-                this.audioRecording = new Audio(audioUrl);
-                this.audioRecording.play();
+                this.audioRecording = blob;
+                this.playAudioRecording(this.audioRecording);
             })
             .catch(error => {
                 console.error('Could not text to speech:', error);
             });
     }
 
-    hasAudioRecording() {
-        return this.audioRecording != null;
-    }
-
-    playAudioRecording() {
-        if (this.hasAudioRecording()) {
-            this.audioRecording.play();
-            this.audioRecording.addEventListener("ended", this.pause());
-            this.shadowRoot.querySelector("#play-btn").style.display = "none";
-            this.shadowRoot.querySelector("#pause-btn").style.display = "inline-block";
-        } else {
-            console.debug("No audio recording found!")
-        }
-    }
-
-    pauseHandler() {
+    pauseButtonHandler() {
         console.debug("Triggered pause!");
-        this.pause();
+        this.pauseAudioRecording();
     }
 
-    pause() {
-        if (this.audioRecording != null) {
-            this.audioRecording.pause();
-            this.shadowRoot.querySelector("#pause-btn").style.display = "none";
-            this.shadowRoot.querySelector("#play-btn").style.display = "inline-block";
-            this.audioRecording.removeEventListener("ended", this.pause());
-        }
-    }
-
-    async record() {
+    async recordButtonHandler() {
         console.debug("Triggered record!");
         const stream = await navigator.mediaDevices.getUserMedia(this.mediaConstraints);
+
         this.recorder = new MediaRecorder(stream);
+        console.debug("Supported Audio Formats:");
+        console.debug("WAV:", MediaRecorder.isTypeSupported("audio/wav"));
+        console.debug("WEBM:", MediaRecorder.isTypeSupported("audio/webm"));
+        console.debug("OGG:", MediaRecorder.isTypeSupported("audio/ogg"));
 
         // Record stream
-        this.recorder.addEventListener('dataavailable', event => { this.onDataAvailable(event) });
+        this.recorder.addEventListener('dataavailable', event => { this.onDataAvailableHandler(event) });
 
         // Stop stream
-        this.recorder.addEventListener('stop', event => { this.onStopRecording(event) });
+        this.recorder.addEventListener('stop', event => { this.onStopHandler(event) });
 
         // Error handler
         this.recorder.addEventListener('error', (event) => {
@@ -220,11 +257,14 @@ export default class NamePronunciationToolComponent extends HTMLElement {
         console.info("Recorder state:", this.recorder.state);
     }
 
-    stop() {
+    stopButtonHandler() {
         console.debug("Triggered stop!");
 
         if (this.recorder != null && this.recorder.state !== "inactive") {
             this.recorder.stop();
+            // TODO: check if removeEventListener should be called 
+            //this.recorder.removeEventListener('dataavailable', event => { this.onDataAvailableHandler(event) });
+            //this.recorder.removeEventListener('stop', event => { this.onStopHandler(event) });
             this.shadowRoot.querySelector("#stop-btn").style.display = "none";
             this.shadowRoot.querySelector("#record-btn").style.display = "inline-block";
 
@@ -236,29 +276,21 @@ export default class NamePronunciationToolComponent extends HTMLElement {
         }
     }
 
-    onDataAvailable(event) {
+    // Recorder Event Handlers
+    onDataAvailableHandler(event) {
         this.audioChunks.push(event.data);
     }
 
-    onStopRecording(event) {
-        const audioBlob = new Blob(this.audioChunks, { type: "audio/wav" });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        //audio.play();
-        let confirmation = window.confirm("Do you want to save the audio recording?");
-        console.debug(confirmation);
+    onStopHandler(event) {
+        this.processAudioRecording();
+    }
 
-        if (confirmation) {
-            this.saveRecording(audioBlob)
-                .then(response => {
-                    console.dir(response);
-                })
-                .catch(err => {
-                    console.error("Could not save the recording:", err);
-                });
-        }
+    hasStoredAudioRecording() {
+        return this.storedAudioRecording != null;
+    }
 
-        this.clear();
+    hasAudioRecording() {
+        return this.audioRecording != null;
     }
 
     clear() {
@@ -266,9 +298,76 @@ export default class NamePronunciationToolComponent extends HTMLElement {
         this.audioChunks = [];
     }
 
+    playAudioRecording(audioBlob) {
+        if (audioBlob != null) {
+            let audioURL = URL.createObjectURL(audioBlob);
+            
+            if (this.audioPlayer != null) {
+                this.audioPlayer.removeEventListener("ended", (event) => { this.stopRecordingHandler(event) });
+                this.audioPlayer = null;
+            }
+
+            this.audioPlayer = new Audio(audioURL);
+            this.audioPlayer.addEventListener("ended", (event) => { this.stopRecordingHandler(event) });
+            this.audioPlayer.play()
+                .then(() => {
+                    this.shadowRoot.querySelector("#play-btn").style.display = "none";
+                    this.shadowRoot.querySelector("#pause-btn").style.display = "inline-block";
+                })
+                .catch(err => {
+                    console.error(err);
+                });
+        } else {
+            console.debug("No audio recording found!")
+        }
+    }
+
+    pauseAudioRecording() {
+        if (this.audioPlayer != null) {
+            this.audioPlayer.pause();
+            this.isPaused = true;
+            this.shadowRoot.querySelector("#pause-btn").style.display = "none";
+            this.shadowRoot.querySelector("#play-btn").style.display = "inline-block";
+        }
+    }
+
+    stopRecordingHandler(event) {
+        this.stopAudioRecording();
+    }
+
+    stopAudioRecording() {
+        if (this.audioPlayer != null) {
+            this.audioPlayer.removeEventListener("ended", (event) => { this.stopRecordingHandler(event) });
+            this.shadowRoot.querySelector("#pause-btn").style.display = "none";
+            this.shadowRoot.querySelector("#play-btn").style.display = "inline-block";
+        }
+    }
+
+    processAudioRecording() {
+        let audioBlob = new Blob(this.audioChunks, { type: "audio/wav" });
+        this.audioRecording = audioBlob;
+        let confirmation = window.confirm("Do you want to save the audio recording?");
+        console.debug("Confirmation dialog :: selected choice ",confirmation);
+
+        if (confirmation) {
+            this.saveAudioRecording(audioBlob)
+                .then(response => {
+                    console.dir("Save recording response:", response);
+                })
+                .catch(err => {
+                    console.error("Could not save the audio recording:", err);
+                    window.alert("Could not save the audio recording!");
+                });
+        }
+
+        this.clear();
+    }
+
+    // Backend Service Calls
     textToSpeech(text) {
         if (text != null && text.trim().length > 0) {
-            let url = new URL(this.config.urls.speechSynthesis);
+            console.debug(this.config.urls.textToSpeech);
+            let url = new URL(this.config.urls.textToSpeech);
             let params = {
                 text: text.trim()
             };
@@ -283,10 +382,11 @@ export default class NamePronunciationToolComponent extends HTMLElement {
         }
     }
 
-    saveRecording(audioBlob) {
+    saveAudioRecording(audioBlob) {
+        console.debug(this.config.urls.saveRecording);
         let url = new URL(this.config.urls.saveRecording);
         let formData = new FormData();
-        formData.append("audio", audioBlob, "recording.wav");
+        formData.append("audio", audioBlob, this.recordId + ".wav");
         return fetch(url, {
             method: "POST",
             body: formData

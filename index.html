@@ -43,6 +43,8 @@
         }).then(response => response.json());
 
         window.addEventListener('DOMContentLoaded', (event) => {
+            let textToSpeechURL = "http://localhost:8080/spellbind/speechSynthesis";
+            let saveRecordingURL = "http://localhost:8080/spellbind/storeAudioFile";
             const employeesTableBody = document.querySelector(".employees-table tbody");
             getEmployees.then(data => {
                 let employees = data;
@@ -61,8 +63,12 @@
                     let legalName = employee.firstName + ' ' + employee.lastName;
                     let preferredName = employee.preferredName;
                     pronunciationCell.innerHTML = `
-                        <name-pronunciation data-preferred-name="${preferredName}"
-                            data-legal-name="${legalName}">
+                        <name-pronunciation 
+                            data-recorded-audio-data="${employee.audioContent}" data-preferred-name="${preferredName}"
+                            data-legal-name="${legalName}" data-record-id="${employee.employeeId}"
+                            data-text-to-speech-url="${textToSpeechURL}"
+                            data-save-recording-url="${saveRecordingURL}"
+                            data-recording-timeout="15">
                         </name-pronunciation>
                     `;
                 });
